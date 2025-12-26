@@ -2,22 +2,42 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [u, setU] = useState("");
-  const [p, setP] = useState("");
-  const nav = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  function login() {
-    if (u === "admin" && p === "ednex@123") {
+  function handleLogin() {
+    if (username === "admin" && password === "ednex@123") {
       localStorage.setItem("admin", "true");
-      nav("/admin");
-    } else alert("Invalid login");
+      navigate("/admin");
+    } else {
+      alert("Invalid username or password");
+    }
   }
 
   return (
-    <div className="max-w-sm mx-auto p-6">
-      <input placeholder="Username" className="border p-2 w-full mb-2" onChange={e=>setU(e.target.value)} />
-      <input type="password" placeholder="Password" className="border p-2 w-full mb-2" onChange={e=>setP(e.target.value)} />
-      <button onClick={login} className="bg-orange-500 text-white w-full py-2">
+    <div className="max-w-md mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Admin Login</h2>
+
+      <input
+        className="border p-2 w-full mb-2"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+
+      <input
+        type="password"
+        className="border p-2 w-full mb-4"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button
+        onClick={handleLogin}
+        className="bg-orange-500 text-white px-4 py-2 w-full"
+      >
         Login
       </button>
     </div>

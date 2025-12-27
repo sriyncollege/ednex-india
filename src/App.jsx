@@ -1,48 +1,49 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
-import Admin from "./pages/Admin";
+import Article from "./pages/Article";
 import Login from "./pages/Login";
+import Admin from "./pages/Admin";
 import Preview from "./pages/Preview";
 
 export default function App() {
   return (
-    <Router>
+    <>
       {/* HEADER */}
-      <header className="border-b sticky top-0 bg-white z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-5xl font-extrabold text-orange-600">
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto py-4 text-center">
+          <h1 className="text-4xl font-bold text-orange-600">
             Education Nexus of India
           </h1>
-          <p className="text-lg text-gray-600 mt-1">
-            Education News • Campus • Careers • Opinion
-          </p>
         </div>
-
-        {/* NAV */}
-        <nav className="bg-orange-500 text-white">
-          <div className="max-w-7xl mx-auto flex gap-6 px-4 py-3 text-lg font-semibold">
-            <Link to="/">Home</Link>
-            <Link to="/?cat=News">News</Link>
-            <Link to="/?cat=Campus">Campus</Link>
-            <Link to="/?cat=Careers">Careers</Link>
-            <Link to="/?cat=Opinion">Opinion</Link>
-            <Link to="/login">Admin</Link>
-          </div>
-        </nav>
       </header>
+
+      {/* NAVBAR */}
+      <nav className="bg-orange-500 text-white">
+        <div className="max-w-7xl mx-auto flex gap-8 px-6 py-4 text-lg font-semibold">
+          <Link to="/" className="hover:underline">Home</Link>
+          <Link to="/?cat=News" className="hover:underline">News</Link>
+          <Link to="/?cat=Campus" className="hover:underline">Campus</Link>
+          <Link to="/?cat=Careers" className="hover:underline">Careers</Link>
+          <Link to="/?cat=Opinion" className="hover:underline">Opinion</Link>
+          <Link to="/?cat=Interviews" className="hover:underline">Interviews</Link>
+
+          <Link to="/login" className="hover:underline ml-auto">Admin</Link>
+        </div>
+      </nav>
 
       {/* ROUTES */}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/article/:id" element={<Article />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/preview" element={<Preview />} />
       </Routes>
 
       {/* FOOTER */}
-      <footer className="border-t py-6 text-center text-sm text-gray-500">
+      <footer className="border-t mt-12 py-6 text-center text-sm text-gray-500">
         © 2025 Education Nexus of India
       </footer>
-    </Router>
+    </>
   );
 }

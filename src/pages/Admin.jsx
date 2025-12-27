@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { getArticles, saveArticles } from "../data/storage";
+import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
   const navigate = useNavigate();
 
+  // 🔐 Protect Admin Route
   useEffect(() => {
     if (!localStorage.getItem("admin")) {
       navigate("/login");
@@ -12,101 +13,201 @@ export default function Admin() {
   }, [navigate]);
 
   const [articles, setArticles] = useState(getArticles());
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [category, setCategory] = useState("News");
-  const [author, setAuthor] = useState("");
-  const [status, setStatus] = useState("Published");
+  const [editId, setEditId] = useState(null);
 
-  function addArticle() {
-    if (!title || !content || !author) return;
-
-    const updated = [
-      {
-        id: Date.now().toString(),
-        title,
-        content,
-        category,
-        author,
-        status,
-        time: "Just now",
-      },
-      ...articles,
-    ];
-
-    saveArticles(updated);
-    setArticles(updated);
-    setTitle("");
-    setContent("");
-    setAuthor("");
-  }
+  const [form, setForm] = useState({
+    title: "",
+    content: "",
+    image: "",
+    category: "News",
+    author: "",
+    status: "Published",
+    publishDate: "",
+  });
 
   function logout() {
     localStorage.removeItem("admin");
     navigate("/login");
   }
 
+  function resetForm() {
+    setForm({
+      title: "",
+      content: "",
+      image: "",
+      category: "News",
+      author: "",
+      status: "Published",
+      publishDate: "",
+    });
+    setEditId(null);
+  }
+
+  function saveArticle() {
+    if (!form.title || !form.content || !form.author) return;
+
+    let updated;
+    if (editId) {
+      updated = articles.map((a) =>
+        a.id === editId ? { ...a, ...form } : a
+      );
+    } else {
+      updated = [
+        { id: Date.now().toString(), ...form, time: "Just now" },
+        ...articles,
+      ];
+    }
+
+    saveArticles(updated);
+    setArticles(updated);
+    resetForm();
+  }
+
+  function editArticle(article) {
+    setEditId(article.id);
+    setForm({
+      title: article.title,
+      content: article.content,
+      image: article.image || "",
+      category: article.category,
+      author: article.author,
+      status: article.status,
+      publishDate: article.publishDate || "",
+    });
+  }
+
+  function previewArticle(article) {
+    localStorage.setItem("preview_article", JSON.stringify(article));
+    window.open("/preview", "_blank");
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="flex justify-between mb-4">
         <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-        <button onClick={logout} className="text-red-600">
+        <button
+          onClick={logout}
+          className="bg-red-600 text-white px-4 py-2"
+        >
           Logout
         </button>
       </div>
 
-      <div className="bg-gray-100 p-4 mb-6 rounded">
+      {/* FORM */}
+      <div className="bg-gray-100 p-4 mb-6">
         <input
           className="border p-2 w-full mb-2"
           placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={form.title}
+          onChange={(e) =>
+            setForm({ ...form, title: e.target.value })
+          }
         />
 
         <input
           className="border p-2 w-full mb-2"
           placeholder="Author"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
+          value={form.author}
+          onChange={(e) =>
+            setForm({ ...form, author: e.target.value })
+          }
+        />
+
+        <input
+          className="border p-2 w-full mb-2"
+          placeholder="Image URL"
+          value={form.image}
+          onChange={(e) =>
+            setForm({ ...form, image: e.target.value })
+          }
         />
 
         <textarea
           className="border p-2 w-full mb-2"
-          placeholder="Content"
           rows="4"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          placeholder="Content"
+          value={form.content}
+          onChange={(e) =>
+            setForm({ ...form, content: e.target.value })
+          }
         />
 
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-3 mb-2">
           <select
             className="border p-2"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={form.category}
+            onChange={(e) =>
+              setForm({ ...form, category: e.target.value })
+            }
           >
             <option>News</option>
             <option>Campus</option>
             <option>Careers</option>
             <option>Opinion</option>
+            <option>Interviews</option>
           </select>
 
           <select
             className="border p-2"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            value={form.status}
+            onChange={(e) =>
+              setForm({ ...form, status: e.target.value })
+            }
           >
             <option>Published</option>
             <option>Draft</option>
           </select>
+
+          <input
+            type="date"
+            className="border p-2"
+            value={form.publishDate}
+            onChange={(e) =>
+              setForm({ ...form, publishDate: e.target.value })
+            }
+          />
         </div>
 
         <button
-          onClick={addArticle}
-          className="bg-orange-500 text-white px-4 py-2"
+          onClick={saveArticle}
+          className="bg-green-600 text-white px-4 py-2"
         >
-          Add Article
+          {editId ? "Update" : "Add"} Article
         </button>
       </div>
+
+      {/* ARTICLES LIST */}
+      {articles.map((a) => (
+        <div key={a.id} className="flex justify-between border-b py-3">
+          <div>
+            <div className="font-semibold">
+              {a.title}
+              {a.status === "Draft" && (
+                <span className="text-xs text-orange-600 ml-2">
+                  (Draft)
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-gray-500">
+              {a.category} · {a.author}
+            </div>
+          </div>
+          <div className="space-x-3">
+            <button
+              onClick={() => previewArticle(a)}
+              className="text-green-600"
+            >
+              Preview
+            </button>
+            <button
+              onClick={() => editArticle(a)}
+              className="text-blue-600"
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

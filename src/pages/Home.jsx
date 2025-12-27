@@ -1,28 +1,48 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { getArticles } from "../data/storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getAllArticles } from "../data/firestore";
 
 export default function Home() {
   const [params] = useSearchParams();
   const category = params.get("cat");
 
-  const allArticles = getArticles().filter((a) => {
-    if (a.status !== "Published") return false;
-    if (!a.publishDate) return true;
-    return new Date(a.publishDate) <= new Date();
-  });
-
-  const articles = category
-    ? allArticles.filter((a) => a.category === category)
-    : allArticles;
-
+  const [articles, setArticles] = useState([]);
   const [visible, setVisible] = useState(6);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  async function loadArticles() {
+    const data = await getAllArticles();
+
+    const published = data.filter((a) => {
+      if (a.status !== "Published") return false;
+      if (!a.publishDate) return true;
+      return new Date(a.publishDate) <= new Date();
+    });
+
+    setArticles(published);
+    setLoading(false);
+  }
+
+  const filtered = category
+    ? articles.filter((a) => a.category === category)
+    : articles;
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-lg text-gray-500">
+        Loading articles…
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">
-      {/* ARTICLES GRID */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-        {articles.slice(0, visible).map((a) => (
+        {filtered.slice(0, visible).map((a) => (
           <Link key={a.id} to={`/article/${a.id}`}>
             <div className="cursor-pointer border rounded overflow-hidden hover:shadow-lg transition">
               {a.image && (
@@ -43,7 +63,7 @@ export default function Home() {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  {a.author} · {a.time}
+                  {a.author} · {a.time || ""}
                 </p>
               </div>
             </div>
@@ -51,8 +71,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* READ MORE */}
-      {visible < articles.length && (
+      {visible < filtered.length && (
         <div className="text-center my-8">
           <button
             onClick={() => setVisible(visible + 6)}

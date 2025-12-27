@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
-import { getArticles, saveArticles } from "../data/storage";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
+import {
+  addArticle,
+  getAllArticles,
+  updateArticle,
+} from "../data/firestore";
 
 export default function Admin() {
   const navigate = useNavigate();
 
-  // 🔐 Protect Admin Route
+  // 🔐 Protect admin route
   useEffect(() => {
-    if (!localStorage.getItem("admin")) {
+    if (!auth.currentUser) {
       navigate("/login");
     }
   }, [navigate]);
 
-  const [articles, setArticles] = useState(getArticles());
+  const [articles, setArticles] = useState([]);
   const [editId, setEditId] = useState(null);
 
   const [form, setForm] = useState({
@@ -25,42 +31,33 @@ export default function Admin() {
     publishDate: "",
   });
 
-  function logout() {
-    localStorage.removeItem("admin");
-    navigate("/login");
+  // 📥 Load articles from Firestore
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  async function loadArticles() {
+    const data = await getAllArticles();
+    setArticles(data);
   }
 
-  function resetForm() {
-    setForm({
-      title: "",
-      content: "",
-      image: "",
-      category: "News",
-      author: "",
-      status: "Published",
-      publishDate: "",
-    });
-    setEditId(null);
-  }
-
-  function saveArticle() {
+  async function saveArticle() {
     if (!form.title || !form.content || !form.author) return;
 
-    let updated;
     if (editId) {
-      updated = articles.map((a) =>
-        a.id === editId ? { ...a, ...form } : a
-      );
+      await updateArticle(editId, {
+        ...form,
+      });
     } else {
-      updated = [
-        { id: Date.now().toString(), ...form, time: "Just now" },
-        ...articles,
-      ];
+      await addArticle({
+        ...form,
+        createdAt: new Date(),
+        time: "Just now",
+      });
     }
 
-    saveArticles(updated);
-    setArticles(updated);
     resetForm();
+    loadArticles();
   }
 
   function editArticle(article) {
@@ -76,9 +73,22 @@ export default function Admin() {
     });
   }
 
-  function previewArticle(article) {
-    localStorage.setItem("preview_article", JSON.stringify(article));
-    window.open("/preview", "_blank");
+  async function logout() {
+    await signOut(auth);
+    navigate("/login");
+  }
+
+  function resetForm() {
+    setEditId(null);
+    setForm({
+      title: "",
+      content: "",
+      image: "",
+      category: "News",
+      author: "",
+      status: "Published",
+      publishDate: "",
+    });
   }
 
   return (
@@ -93,7 +103,7 @@ export default function Admin() {
         </button>
       </div>
 
-      {/* FORM */}
+      {/* ARTICLE FORM */}
       <div className="bg-gray-100 p-4 mb-6">
         <input
           className="border p-2 w-full mb-2"
@@ -176,7 +186,7 @@ export default function Admin() {
         </button>
       </div>
 
-      {/* ARTICLES LIST */}
+      {/* ARTICLE LIST */}
       {articles.map((a) => (
         <div key={a.id} className="flex justify-between border-b py-3">
           <div>
@@ -192,20 +202,12 @@ export default function Admin() {
               {a.category} · {a.author}
             </div>
           </div>
-          <div className="space-x-3">
-            <button
-              onClick={() => previewArticle(a)}
-              className="text-green-600"
-            >
-              Preview
-            </button>
-            <button
-              onClick={() => editArticle(a)}
-              className="text-blue-600"
-            >
-              Edit
-            </button>
-          </div>
+          <button
+            onClick={() => editArticle(a)}
+            className="text-blue-600"
+          >
+            Edit
+          </button>
         </div>
       ))}
     </div>

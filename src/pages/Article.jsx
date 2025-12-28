@@ -4,12 +4,13 @@ import { db } from "../firebase";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
-function getReadTime(text) {
-  if (!text) return 1;
+/* ---------- Helpers ---------- */
+
+function getReadTime(text = "") {
   return Math.max(1, Math.ceil(text.split(" ").length / 200));
 }
 
-function formatContent(text) {
+function formatContent(text = "") {
   return text
     .replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>")
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
@@ -17,23 +18,56 @@ function formatContent(text) {
     .replace(/\n/g, "<br />");
 }
 
+/* ---------- Component ---------- */
+
 export default function Article() {
   const { id } = useParams();
   const [article, setArticle] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadArticle();
+    // eslint-disable-next-line
   }, []);
 
   async function loadArticle() {
-    const snap = await getDoc(doc(db, "articles", id));
-    if (snap.exists()) {
-      setArticle(snap.data());
+    try {
+      const ref = doc(db, "articles", id);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        setError("Article not found");
+        return;
+      }
+
+      const data = snap.data();
+
+      setArticle({
+        title: data.title || "Untitled",
+        subtitle: data.subtitle || "",
+        content: data.content || "",
+        image: data.image || "",
+        imageCaption: data.imageCaption || "",
+        category: data.category || "News",
+        author: data.author || "Education Nexus Desk",
+        publishDate: data.publishDate || "",
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load article");
     }
   }
 
+  if (error) {
+    return (
+      <div className="p-10 text-center text-red-600 font-semibold">
+        {error}
+      </div>
+    );
+  }
+
   if (!article) {
-    return <div className="p-6 text-center">Loading…</div>;
+    return <div className="p-10 text-center">Loading…</div>;
   }
 
   const pageUrl = window.location.href;
@@ -41,7 +75,7 @@ export default function Article() {
     article.subtitle ||
     article.content.replace(/\*/g, "").slice(0, 150);
 
-  /* 🔵 SCHEMA.ORG STRUCTURED DATA */
+  /* ---------- Schema.org ---------- */
   const schema = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -56,24 +90,19 @@ export default function Article() {
     "dateModified": article.publishDate || new Date().toISOString(),
     "author": {
       "@type": "Person",
-      "name": article.author || "Education Nexus Desk",
+      "name": article.author,
     },
     "publisher": {
       "@type": "Organization",
       "name": "Education Nexus of India",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://ednex-india.vercel.app/logo.png"
-      }
-    }
+    },
   };
 
   return (
     <>
-      {/* 🔵 SEO + SOCIAL + SCHEMA */}
+      {/* ---------- SEO + SOCIAL ---------- */}
       <Helmet>
         <title>{article.title} | Education Nexus of India</title>
-
         <meta name="description" content={description} />
 
         {/* Open Graph */}
@@ -93,20 +122,20 @@ export default function Article() {
           <meta name="twitter:image" content={article.image} />
         )}
 
-        {/* Schema.org */}
+        {/* Schema */}
         <script type="application/ld+json">
           {JSON.stringify(schema)}
         </script>
       </Helmet>
 
-      {/* 🔵 ARTICLE BODY */}
+      {/* ---------- ARTICLE ---------- */}
       <div className="max-w-3xl mx-auto px-6 py-12">
         {article.image && (
           <>
             <img
               src={article.image}
-              className="w-full h-72 object-cover mb-2"
               alt={article.title}
+              className="w-full h-72 object-cover mb-2"
             />
             {article.imageCaption && (
               <p className="text-sm text-gray-500 italic mb-6">
@@ -144,7 +173,7 @@ export default function Article() {
           {getReadTime(article.content)} min read
         </p>
 
-        {/* SHARE BUTTONS */}
+        {/* ---------- SHARE ---------- */}
         <div className="flex gap-6 mt-6 font-semibold">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
@@ -180,12 +209,15 @@ export default function Article() {
           </a>
         </div>
 
-        <div
-          className="mt-8 text-lg leading-relaxed text-justify prose max-w-none"
-          dangerouslySetInnerHTML={{
-            __html: formatContent(article.content),
-          }}
-        />
+        {/* ---------- CONTENT ---------- */}
+        {article.content && (
+          <div
+            className="mt-8 text-lg leading-relaxed text-justify prose max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: formatContent(article.content),
+            }}
+          />
+        )}
       </div>
     </>
   );

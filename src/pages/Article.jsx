@@ -1,69 +1,26 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { getArticles } from "../data/storage";
+
+function getReadTime(text) {
+  const words = text.split(" ").length;
+  return Math.max(1, Math.ceil(words / 200));
+}
 
 export default function Article() {
   const { id } = useParams();
-  const [article, setArticle] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadArticle();
-  }, []);
-
-  async function loadArticle() {
-    try {
-      const ref = doc(db, "articles", id);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        const data = snap.data();
-
-        // Hide drafts from public
-        if (data.status !== "Published") {
-          setArticle(null);
-        } else {
-          // Respect publish date
-          if (data.publishDate && new Date(data.publishDate) > new Date()) {
-            setArticle(null);
-          } else {
-            setArticle(data);
-          }
-        }
-      } else {
-        setArticle(null);
-      }
-    } catch (err) {
-      setArticle(null);
-    }
-
-    setLoading(false);
-  }
-
-  if (loading) {
-    return (
-      <div className="text-center py-20 text-lg text-gray-500">
-        Loading article…
-      </div>
-    );
-  }
+  const article = getArticles().find(a => a.id === id);
 
   if (!article) {
-    return (
-      <div className="text-center py-20 text-xl font-semibold">
-        Article not found
-      </div>
-    );
+    return <div className="p-6 text-center">Article not found</div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-6 py-10">
       {article.image && (
         <img
           src={article.image}
-          alt={article.title}
-          className="w-full h-96 object-cover mb-6"
+          className="w-full h-72 object-cover mb-6"
+          alt=""
         />
       )}
 
@@ -71,17 +28,38 @@ export default function Article() {
         {article.category}
       </span>
 
-      <h1 className="text-3xl font-bold mt-4">
+      <h1 className="text-3xl md:text-4xl font-bold mt-4">
         {article.title}
       </h1>
 
-      <p className="text-sm text-gray-500 mt-2">
-        {article.author} · {article.time || ""}
+      {article.subtitle && (
+        <h2 className="text-lg md:text-xl italic text-gray-700 mt-3">
+          {article.subtitle}
+        </h2>
+      )}
+
+      <p className="text-sm text-gray-500 mt-4">
+        {article.author} ·{" "}
+        {article.publishDate
+          ? new Date(article.publishDate).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          : "Just now"}{" "}
+        · {getReadTime(article.content)} min read
       </p>
 
-      <div className="mt-6 text-lg leading-relaxed whitespace-pre-line">
-        {article.content}
-      </div>
+      <div
+        className="mt-8 text-lg leading-relaxed text-justify prose max-w-none"
+        dangerouslySetInnerHTML={{
+          __html: article.content
+            .replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>")
+            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+            .replace(/\*(.*?)\*/g, "<i>$1</i>")
+            .replace(/\n/g, "<br />"),
+        }}
+      />
     </div>
   );
 }

@@ -1,11 +1,5 @@
 {
-  "routes": [
-    {
-      "src": "/article/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "x-vercel-prerender": "1"
-      }
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

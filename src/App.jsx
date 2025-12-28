@@ -14,13 +14,10 @@ export default function App() {
           <h1 className="text-4xl md:text-5xl font-extrabold text-orange-600 tracking-wide">
             Education Nexus of India
           </h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Education News • Campus • Careers • Opinion • Interviews
-          </p>
         </div>
       </header>
 
-      {/* PUBLIC NAVBAR (ADMIN HIDDEN) */}
+      {/* PUBLIC NAVBAR */}
       <nav className="bg-orange-500 text-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-6 px-6 py-4 text-lg font-semibold">
           <Link to="/" className="hover:underline">Home</Link>

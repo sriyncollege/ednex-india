@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
 /* ---------- Helpers ---------- */
-
 function getReadTime(text = "") {
   return Math.max(1, Math.ceil(text.split(" ").length / 200));
 }
@@ -19,44 +18,41 @@ function formatContent(text = "") {
 }
 
 /* ---------- Component ---------- */
-
 export default function Article() {
   const { id } = useParams();
   const [article, setArticle] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    loadArticle();
-    // eslint-disable-next-line
-  }, []);
+    async function load() {
+      try {
+        const ref = doc(db, "articles", id);
+        const snap = await getDoc(ref);
 
-  async function loadArticle() {
-    try {
-      const ref = doc(db, "articles", id);
-      const snap = await getDoc(ref);
+        if (!snap.exists()) {
+          setError("Article not found");
+          return;
+        }
 
-      if (!snap.exists()) {
-        setError("Article not found");
-        return;
+        const d = snap.data();
+
+        setArticle({
+          title: d.title || "Untitled",
+          subtitle: d.subtitle || "",
+          content: d.content || "",
+          image: d.image || "",
+          imageCaption: d.imageCaption || "",
+          category: d.category || "News",
+          author: d.author || "Education Nexus Desk",
+          publishDate: d.publishDate || "",
+        });
+      } catch (e) {
+        setError("Unable to load article");
       }
-
-      const data = snap.data();
-
-      setArticle({
-        title: data.title || "Untitled",
-        subtitle: data.subtitle || "",
-        content: data.content || "",
-        image: data.image || "",
-        imageCaption: data.imageCaption || "",
-        category: data.category || "News",
-        author: data.author || "Education Nexus Desk",
-        publishDate: data.publishDate || "",
-      });
-    } catch (err) {
-      console.error(err);
-      setError("Unable to load article");
     }
-  }
+
+    load();
+  }, [id]);
 
   if (error) {
     return (
@@ -75,37 +71,31 @@ export default function Article() {
     article.subtitle ||
     article.content.replace(/\*/g, "").slice(0, 150);
 
-  /* ---------- Schema.org ---------- */
+  /* ---------- Schema (SAFE) ---------- */
   const schema = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": pageUrl,
-    },
-    "headline": article.title,
-    "description": description,
-    "image": article.image ? [article.image] : [],
-    "datePublished": article.publishDate || new Date().toISOString(),
-    "dateModified": article.publishDate || new Date().toISOString(),
-    "author": {
+    headline: article.title,
+    description,
+    image: article.image ? [article.image] : [],
+    datePublished: article.publishDate || new Date().toISOString(),
+    author: {
       "@type": "Person",
-      "name": article.author,
+      name: article.author,
     },
-    "publisher": {
+    publisher: {
       "@type": "Organization",
-      "name": "Education Nexus of India",
+      name: "Education Nexus of India",
     },
   };
 
   return (
     <>
-      {/* ---------- SEO + SOCIAL ---------- */}
+      {/* SEO + SOCIAL (SAFE) */}
       <Helmet>
         <title>{article.title} | Education Nexus of India</title>
         <meta name="description" content={description} />
 
-        {/* Open Graph */}
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="article" />
@@ -114,21 +104,14 @@ export default function Article() {
           <meta property="og:image" content={article.image} />
         )}
 
-        {/* Twitter / X */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={article.title} />
-        <meta name="twitter:description" content={description} />
-        {article.image && (
-          <meta name="twitter:image" content={article.image} />
-        )}
 
-        {/* Schema */}
         <script type="application/ld+json">
           {JSON.stringify(schema)}
         </script>
       </Helmet>
 
-      {/* ---------- ARTICLE ---------- */}
+      {/* ARTICLE UI */}
       <div className="max-w-3xl mx-auto px-6 py-12">
         {article.image && (
           <>
@@ -154,7 +137,7 @@ export default function Article() {
         </h1>
 
         {article.subtitle && (
-          <h2 className="text-lg md:text-xl italic text-gray-700 mt-3">
+          <h2 className="text-lg italic text-gray-700 mt-3">
             {article.subtitle}
           </h2>
         )}
@@ -162,18 +145,13 @@ export default function Article() {
         <p className="text-sm text-gray-500 mt-4">
           {article.author}
           {" · "}
-          {article.publishDate
-            ? new Date(article.publishDate).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })
-            : ""}
+          {article.publishDate &&
+            new Date(article.publishDate).toLocaleDateString("en-IN")}
           {" · "}
           {getReadTime(article.content)} min read
         </p>
 
-        {/* ---------- SHARE ---------- */}
+        {/* SHARE */}
         <div className="flex gap-6 mt-6 font-semibold">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
@@ -185,39 +163,25 @@ export default function Article() {
           >
             WhatsApp
           </a>
-
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              article.title
-            )}&url=${encodeURIComponent(pageUrl)}`}
+            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+              pageUrl
+            )}`}
             target="_blank"
             rel="noreferrer"
             className="text-blue-500"
           >
             X
           </a>
-
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-              pageUrl
-            )}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-blue-700"
-          >
-            Facebook
-          </a>
         </div>
 
-        {/* ---------- CONTENT ---------- */}
-        {article.content && (
-          <div
-            className="mt-8 text-lg leading-relaxed text-justify prose max-w-none"
-            dangerouslySetInnerHTML={{
-              __html: formatContent(article.content),
-            }}
-          />
-        )}
+        {/* CONTENT */}
+        <div
+          className="mt-8 text-lg leading-relaxed text-justify prose max-w-none"
+          dangerouslySetInnerHTML={{
+            __html: formatContent(article.content),
+          }}
+        />
       </div>
     </>
   );

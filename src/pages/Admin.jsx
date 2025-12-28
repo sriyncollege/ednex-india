@@ -7,11 +7,12 @@ import {
   getAllArticles,
   updateArticle,
 } from "../data/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default function Admin() {
   const navigate = useNavigate();
 
-  // 🔐 Protect admin route
   useEffect(() => {
     if (!auth.currentUser) {
       navigate("/login");
@@ -31,7 +32,6 @@ export default function Admin() {
     publishDate: "",
   });
 
-  // 📥 Load articles from Firestore
   useEffect(() => {
     loadArticles();
   }, []);
@@ -45,9 +45,7 @@ export default function Admin() {
     if (!form.title || !form.content || !form.author) return;
 
     if (editId) {
-      await updateArticle(editId, {
-        ...form,
-      });
+      await updateArticle(editId, { ...form });
     } else {
       await addArticle({
         ...form,
@@ -71,6 +69,17 @@ export default function Admin() {
       status: article.status,
       publishDate: article.publishDate || "",
     });
+  }
+
+  function previewArticle(article) {
+    localStorage.setItem("preview_article", JSON.stringify(article));
+    window.open("/preview", "_blank");
+  }
+
+  async function deleteArticle(id) {
+    if (!window.confirm("Delete this article permanently?")) return;
+    await deleteDoc(doc(db, "articles", id));
+    loadArticles();
   }
 
   async function logout() {
@@ -103,7 +112,7 @@ export default function Admin() {
         </button>
       </div>
 
-      {/* ARTICLE FORM */}
+      {/* FORM */}
       <div className="bg-gray-100 p-4 mb-6">
         <input
           className="border p-2 w-full mb-2"
@@ -202,12 +211,27 @@ export default function Admin() {
               {a.category} · {a.author}
             </div>
           </div>
-          <button
-            onClick={() => editArticle(a)}
-            className="text-blue-600"
-          >
-            Edit
-          </button>
+
+          <div className="space-x-3 text-sm">
+            <button
+              onClick={() => previewArticle(a)}
+              className="text-green-600"
+            >
+              Preview
+            </button>
+            <button
+              onClick={() => editArticle(a)}
+              className="text-blue-600"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => deleteArticle(a.id)}
+              className="text-red-600"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       ))}
     </div>

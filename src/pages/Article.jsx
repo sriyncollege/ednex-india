@@ -5,8 +5,7 @@ import { useEffect, useState } from "react";
 
 function getReadTime(text) {
   if (!text) return 1;
-  const words = text.split(" ").length;
-  return Math.max(1, Math.ceil(words / 200));
+  return Math.max(1, Math.ceil(text.split(" ").length / 200));
 }
 
 function formatContent(text) {
@@ -27,30 +26,33 @@ export default function Article() {
 
   async function load() {
     const snap = await getDoc(doc(db, "articles", id));
-    if (snap.exists()) {
-      setArticle(snap.data());
-    }
+    if (snap.exists()) setArticle(snap.data());
   }
 
-  if (!article) {
-    return <div className="p-6 text-center">Loading…</div>;
-  }
+  if (!article) return <div className="p-6 text-center">Loading…</div>;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-6 py-12">
       {article.image && (
-        <img
-          src={article.image}
-          className="w-full h-72 object-cover mb-6"
-          alt=""
-        />
+        <>
+          <img
+            src={article.image}
+            className="w-full h-72 object-cover mb-2"
+            alt=""
+          />
+          {article.imageCaption && (
+            <p className="text-sm text-gray-500 italic mb-6">
+              {article.imageCaption}
+            </p>
+          )}
+        </>
       )}
 
       <span className="bg-orange-500 text-white px-3 py-1 text-sm">
         {article.category}
       </span>
 
-      <h1 className="text-3xl md:text-4xl font-bold mt-4 leading-tight">
+      <h1 className="text-3xl md:text-4xl font-bold mt-4 text-left leading-tight">
         {article.title}
       </h1>
 

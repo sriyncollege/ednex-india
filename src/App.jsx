@@ -11,21 +11,33 @@ export default function App() {
       {/* HEADER */}
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto py-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-orange-600 tracking-wide">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-orange-600 tracking-wide">
             Education Nexus of India
           </h1>
         </div>
       </header>
 
-      {/* PUBLIC NAVBAR */}
+      {/* MAIN NAVBAR (SINGLE, WORKING) */}
       <nav className="bg-orange-500 text-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-6 px-6 py-4 text-lg font-semibold">
-          <Link to="/" className="hover:underline">Home</Link>
-          <Link to="/?cat=News" className="hover:underline">News</Link>
-          <Link to="/?cat=Campus" className="hover:underline">Campus</Link>
-          <Link to="/?cat=Careers" className="hover:underline">Careers</Link>
-          <Link to="/?cat=Opinion" className="hover:underline">Opinion</Link>
-          <Link to="/?cat=Interviews" className="hover:underline">Interviews</Link>
+        <div className="max-w-7xl mx-auto flex flex-wrap gap-6 px-6 py-4 text-lg font-semibold">
+          <Link to="/" className="hover:underline">
+            Home
+          </Link>
+          <Link to="/?cat=News" className="hover:underline">
+            News
+          </Link>
+          <Link to="/?cat=Campus" className="hover:underline">
+            Campus
+          </Link>
+          <Link to="/?cat=Careers" className="hover:underline">
+            Careers
+          </Link>
+          <Link to="/?cat=Opinion" className="hover:underline">
+            Opinion
+          </Link>
+          <Link to="/?cat=Interviews" className="hover:underline">
+            Interviews
+          </Link>
         </div>
       </nav>
 

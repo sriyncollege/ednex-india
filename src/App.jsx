@@ -9,25 +9,26 @@ export default function App() {
   return (
     <>
       {/* HEADER */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto py-4 text-center">
-          <h1 className="text-4xl font-bold text-orange-600">
+      <header className="bg-white border-b">
+        <div className="max-w-7xl mx-auto py-6 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-orange-600 tracking-wide">
             Education Nexus of India
           </h1>
+          <p className="text-lg text-gray-600 mt-2">
+            Education News • Campus • Careers • Opinion • Interviews
+          </p>
         </div>
       </header>
 
-      {/* NAVBAR */}
-      <nav className="bg-orange-500 text-white">
-        <div className="max-w-7xl mx-auto flex gap-8 px-6 py-4 text-lg font-semibold">
+      {/* PUBLIC NAVBAR (ADMIN HIDDEN) */}
+      <nav className="bg-orange-500 text-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-6 px-6 py-4 text-lg font-semibold">
           <Link to="/" className="hover:underline">Home</Link>
           <Link to="/?cat=News" className="hover:underline">News</Link>
           <Link to="/?cat=Campus" className="hover:underline">Campus</Link>
           <Link to="/?cat=Careers" className="hover:underline">Careers</Link>
           <Link to="/?cat=Opinion" className="hover:underline">Opinion</Link>
           <Link to="/?cat=Interviews" className="hover:underline">Interviews</Link>
-
-          <Link to="/login" className="hover:underline ml-auto">Admin</Link>
         </div>
       </nav>
 

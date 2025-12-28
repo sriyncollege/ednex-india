@@ -19,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 
-// ✅ CRITICAL LINE — fixes login across domains
+// ✅ keeps login working across refresh & domains
 setPersistence(auth, browserLocalPersistence);
 
 export const db = getFirestore(app);

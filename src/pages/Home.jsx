@@ -63,7 +63,14 @@ export default function Home() {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  {a.author} · {a.time || ""}
+                  {a.author} ·{" "}
+                  {a.publishDate
+                    ? new Date(a.publishDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Just now"}
                 </p>
               </div>
             </div>

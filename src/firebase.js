@@ -1,5 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 
-// ✅ THIS LINE FIXES LOGIN ACROSS DOMAINS
+// ✅ CRITICAL LINE — fixes login across domains
 setPersistence(auth, browserLocalPersistence);
 
 export const db = getFirestore(app);

@@ -14,23 +14,10 @@ export default function Login() {
     setError("");
 
     try {
-      const userCred = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      // ✅ Persist admin session
-      localStorage.setItem("admin", "true");
-
-      console.log("LOGIN SUCCESS:", userCred.user.email);
-
+      await signInWithEmailAndPassword(auth, email, password);
       navigate("/admin");
     } catch (err) {
-      console.error("FIREBASE LOGIN ERROR:", err);
-
-      // ✅ Show real Firebase error
-      setError(err.code || "Login failed");
+      setError("Invalid email or password");
     }
   }
 
@@ -60,9 +47,7 @@ export default function Login() {
         />
 
         {error && (
-          <p className="text-red-600 text-sm mb-2">
-            {error}
-          </p>
+          <p className="text-red-600 text-sm mb-2">{error}</p>
         )}
 
         <button

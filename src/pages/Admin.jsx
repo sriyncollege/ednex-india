@@ -9,7 +9,8 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
@@ -17,6 +18,7 @@ export default function Admin() {
 
   const [articles, setArticles] = useState([]);
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     title: "",
@@ -30,16 +32,21 @@ export default function Admin() {
     publishDate: "",
   });
 
-  // 🔐 Protect Admin
+  // 🔐 PROTECT ADMIN USING FIREBASE AUTH (FINAL FIX)
   useEffect(() => {
-    if (!localStorage.getItem("admin")) {
-      navigate("/login");
-      return;
-    }
-    loadArticles();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (!user) {
+        navigate("/login");
+      } else {
+        loadArticles();
+        setLoading(false);
+      }
+    });
 
-  // 🔄 Load articles from Firestore
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // 🔄 LOAD ARTICLES
   async function loadArticles() {
     const q = query(
       collection(db, "articles"),
@@ -50,13 +57,13 @@ export default function Admin() {
     setArticles(list);
   }
 
-  // 🔓 Logout
-  function logout() {
-    localStorage.removeItem("admin");
+  // 🔓 LOGOUT (FIREBASE)
+  async function logout() {
+    await signOut(auth);
     navigate("/login");
   }
 
-  // ♻ Reset form
+  // ♻ RESET FORM
   function resetForm() {
     setForm({
       title: "",
@@ -72,7 +79,7 @@ export default function Admin() {
     setEditId(null);
   }
 
-  // 💾 Save / Update article
+  // 💾 SAVE / UPDATE ARTICLE
   async function saveArticle() {
     if (!form.title || !form.content || !form.author) {
       alert("Title, content and author are required");
@@ -92,17 +99,26 @@ export default function Admin() {
     loadArticles();
   }
 
-  // 🔍 Preview article
+  // 🔍 PREVIEW ARTICLE
   function previewArticle(article) {
     localStorage.setItem("preview_article", JSON.stringify(article));
     window.open("/preview", "_blank");
   }
 
-  // ❌ Delete article
+  // ❌ DELETE ARTICLE
   async function deleteArticle(id) {
     if (!window.confirm("Delete this article permanently?")) return;
     await deleteDoc(doc(db, "articles", id));
     loadArticles();
+  }
+
+  // ⏳ LOADING STATE
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-600">
+        Checking admin access...
+      </div>
+    );
   }
 
   return (
@@ -152,7 +168,9 @@ export default function Admin() {
           className="border p-2 w-full mb-2"
           placeholder="Image caption (optional)"
           value={form.imageCaption}
-          onChange={e => setForm({ ...form, imageCaption: e.target.value })}
+          onChange={e =>
+            setForm({ ...form, imageCaption: e.target.value })
+          }
         />
 
         <textarea
@@ -189,7 +207,9 @@ export default function Admin() {
             type="date"
             className="border p-2"
             value={form.publishDate}
-            onChange={e => setForm({ ...form, publishDate: e.target.value })}
+            onChange={e =>
+              setForm({ ...form, publishDate: e.target.value })
+            }
           />
         </div>
 
@@ -202,7 +222,9 @@ export default function Admin() {
       </div>
 
       {/* EXISTING ARTICLES */}
-      <h3 className="text-xl font-semibold mb-4">Existing Articles</h3>
+      <h3 className="text-xl font-semibold mb-4">
+        Existing Articles
+      </h3>
 
       {articles.length === 0 && (
         <p className="text-gray-500">No articles found</p>
@@ -217,7 +239,9 @@ export default function Admin() {
             <div className="font-semibold">
               {a.title}
               {a.status === "Draft" && (
-                <span className="text-xs text-orange-600 ml-2">(Draft)</span>
+                <span className="text-xs text-orange-600 ml-2">
+                  (Draft)
+                </span>
               )}
             </div>
             <div className="text-sm text-gray-500">
